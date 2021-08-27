@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<link rel="stylesheet" href="./styles.css" />
+	</head>
+	<body>
+		<div class="container">
+			<h1>BTC POS</h1>
+			<p>This is a experimental btc pay system</p>
+			<form id="form">
+				<fieldset>
+					<legend>How much you wanna pay?</legend>
+					<label for="usd-amount">USD</label>
+					<input
+						type="number"
+						id="usd-amount"
+						oninput="onUSDAmountChange()"
+					/>
+					<label for="btc-amount">BTC</label>
+					<input
+						type="number"
+						id="btc-amount"
+						step="0.00000001"
+						oninput="onBTCAmountChange()"
+					/>
+					<button>PAY</button>
+				</fieldset>
+			</form>
+			<div class="loading hidden" id="loading">
+				<img
+					src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Youtube_loading_symbol_1_(wobbly).gif"
+				/>
+			</div>
+			<div id="response" class="hidden">
+				<p>Waiting your payment on this address:</p>
+				<p id="address"></p>
+				<img src="" id="qr" />
+				<p id="payment-id"></p>
+			</div>
+		</div>
+	</body>
+	<script>
+		const url_qr =
+			"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=";
+		//var usdAmount = document.getElementById("usd-amount");
+		//var btcAmount = document.getElementById("btc-amount");
+		var usdPrice = 0;
+		async function postData(url = "", data = {}) {
+			const response = await fetch(url, {
+				method: "POST",
+				mode: "cors",
+				cache: "no-cache",
+				credentials: "same-origin",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				redirect: "follow",
+				referrerPolicy: "no-referrer",
+				body: JSON.stringify(data),
+			});
+			return response.json();
+		}
+		function handleSubmit(e) {
+			e.preventDefault();
+			console.log("requesting");
+			document.getElementById("form").classList.add("hidden");
+			document.getElementById("loading").classList.remove("hidden");
+			const amount =
+				document.getElementById("btc-amount").value * 100000000;
+			console.log("amount", amount);
+			postData("http://localhost:8080/payments/", {
+				amount: amount,
+			}).then((data) => {
+				document.getElementById("loading").classList.add("hidden");
+				document.getElementById("address").innerText =
+					data.body.wallet.address;
+				document
+					.getElementById("qr")
+					.setAttribute(
+						"src",
+						url_qr +
+							"bitcoin:" +
+							data.body.wallet.address +
+							"?amount=" +
+							amount
+					);
+				document.getElementById("payment-id").innerText =
+					"PAYMENT ID: " + data.body.payment.id;
+				document.getElementById("response").classList.remove("hidden");
+			});
+		}
+		document.getElementById("form").onsubmit = handleSubmit;
+		function onUSDAmountChange() {
+			console.log("x");
+			var usdAmount = document.getElementById("usd-amount").value;
+			var btcAmount = document.getElementById("btc-amount");
+			btcAmount.value =
+				Math.round((usdAmount / usdPrice) * 100000000) / 100000000;
+		}
+		function onBTCAmountChange() {
+			console.log("x");
+			var usdAmount = document.getElementById("usd-amount");
+			var btcAmount = document.getElementById("btc-amount").value;
+			usdAmount.value = btcAmount * usdPrice;
+		}
+		window.onload = () => {
+			console.log("FETCHING DATA");
+			fetch("https://blockchain.info/ticker")
+				.then((response) => response.json())
+				.then((data) => {
+					usdPrice = data.USD.buy;
+				});
+		};
+	</script>
+</html>

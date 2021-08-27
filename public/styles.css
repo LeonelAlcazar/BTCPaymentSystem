@@ -1,0 +1,27 @@
+* {
+	margin: 0px;
+	padding: 0px;
+}
+body {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+}
+
+.container {
+	padding: 10px;
+	background: #2ecc71;
+	color: #000;
+}
+
+fieldset {
+	padding: 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.hidden {
+	display: none;
+}
